@@ -44,7 +44,8 @@ delete(Name) ->
     true = ets:delete(Name),
     true = ets:delete(lic_internal_info, {time_table, Name}),
     true = ets:delete(lic_internal_info, {options, Name, size}),
-    true = ets:delete(lic_internal_info, {options, Name, memory}).
+    true = ets:delete(lic_internal_info, {options, Name, memory}),
+    ok.
 
 % internal
 
