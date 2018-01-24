@@ -23,15 +23,15 @@ start_link(Name) ->
 init([Name]) ->
     TimeTable = ets:new(time_table, [ordered_set, public]),
     _         = ets:new(Name, [named_table, set, public]),
-    ok = save_time_table(Name, TimeTable),
-    [{_, Size}]   = ets:lookup(lic_internal_info, {options, Name, size}),
+    _ = ets:insert(lic_internal_info, {{time_table, Name}, TimeTable}),
+    [{_, Size}]   = ets:lookup(lic_internal_info, {options, Name, row_count}),
     [{_, Memory}] = ets:lookup(lic_internal_info, {options, Name, memory}),
     State = #{
         name => Name,
+        time_table => TimeTable,
         size => Size,
         memory => Memory
     },
-    self() ! check,
     {ok, State}.
 
 handle_call(_Request, _From, State) ->
@@ -40,7 +40,8 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(check, State) ->
+handle_info(clear, State) ->
+    _ = ets:insert(lic_internal_info, {{worker_state, self()}, busy}),
     #{
          name := Name,    
          size := Size,
@@ -55,7 +56,7 @@ handle_info(check, State) ->
         false ->
             ok;
         true  ->
-            _ = [delete_oldest(Name) || _ <- lists:seq(1, SizeOvershoot)]
+            _ = [delete_oldest(Name, State) || _ <- lists:seq(1, SizeOvershoot)]
     end,
     RealMemory = ets:info(Name, memory),
     case RealMemory > Memory of
@@ -63,10 +64,9 @@ handle_info(check, State) ->
             ok;
         true  ->
             
-            ok = delete_oldest(Name)
+            ok = delete_oldest(Name, State)
     end,
-    timer:sleep(10),
-    self() ! check,
+    _ = ets:insert(lic_internal_info, {{worker_state, self()}, ready}),
     {noreply, State};
 
 handle_info(_Info, State) ->
@@ -79,11 +79,6 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 % internal
-delete_oldest(Name) ->
-    [{_, Tid}] = ets:lookup(lic_internal_info, {time_table, Name}),
+delete_oldest(Name, #{time_table := Tid}) ->
     [{_, Key}] = ets:lookup(Tid, ets:first(Tid)),
     lic_data:delete(Name, Key).
-
-save_time_table(Name, Tid) ->                                                    
-     ets:insert(lic_internal_info, {{time_table, Name}, Tid}),                    
-     ok. 
