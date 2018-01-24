@@ -86,4 +86,4 @@ delete_oldest(Name) ->
 
 save_time_table(Name, Tid) ->                                                    
      ets:insert(lic_internal_info, {{time_table, Name}, Tid}),                    
-     ok.
+     ok. 
