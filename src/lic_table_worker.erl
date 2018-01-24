@@ -1,10 +1,9 @@
--module(lic_cleaner).
+-module(lic_table_worker).
 
 -behaviour(gen_server).
 
 -export([
-    start/1,
-    stop/1
+    start_link/1
 ]).
 
 %% gen_server callbacks
@@ -17,27 +16,14 @@
     code_change/3
 ]).
 
--define(CLEANER_COUNT,1).
-
-start(Name) ->
-    Pids = [begin
-        {ok, Pid} = gen_server:start_link(?MODULE, [Name], []),
-        Pid 
-    end || _N <- lists:seq(1, ?CLEANER_COUNT)],
-    true = ets:insert(lic_internal_info, {{cleaners, Name}, Pids}),
-    ok.
+start_link(Name) ->
+    gen_server:start_link(?MODULE, [Name], []).
     
-stop(Name) ->
-    case ets:lookup(lic_internal_info, {cleaners, Name}) of
-        [{_, Pids}] ->
-            _ = [ok = gen_server:stop(Pid) || Pid <- Pids],
-            ok;
-        [] ->
-            ok
-    end.
-
 %% gen_server callbacks
 init([Name]) ->
+    TimeTable = ets:new(time_table, [ordered_set, public]),
+    _         = ets:new(Name, [named_table, set, public]),
+    ok = save_time_table(Name, TimeTable),
     [{_, Size}]   = ets:lookup(lic_internal_info, {options, Name, size}),
     [{_, Memory}] = ets:lookup(lic_internal_info, {options, Name, memory}),
     State = #{
@@ -97,3 +83,7 @@ delete_oldest(Name) ->
     [{_, Tid}] = ets:lookup(lic_internal_info, {time_table, Name}),
     [{_, Key}] = ets:lookup(Tid, ets:first(Tid)),
     lic_data:delete(Name, Key).
+
+save_time_table(Name, Tid) ->                                                    
+     ets:insert(lic_internal_info, {{time_table, Name}, Tid}),                    
+     ok.

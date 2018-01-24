@@ -1,13 +1,15 @@
 How to use it
 ======================================
 
-1. init internal ets:
+1. start app:
 
-	```lic:init() -> ok.```
+	```application:start(lic).```
 
 2. init your table:
 
-	```lic:table_new(tab_name, [{memory, 10000000}, {size, 100000}]) -> ok.```
+	```lic:new(tab_name, [{memory, 10000000}, {size, 100000}]) -> ok.```
+    or
+    ```lic:new(tab_name) -> ok.```
 
 3. insert data:
 
@@ -24,7 +26,3 @@ How to use it
 5. you can delete your data:
 
 	```lic:delete(tab_name, Key) -> ok.```
-
-5. you can delete your table:
-
-	```lic:table_delete(tab_name) -> ok```

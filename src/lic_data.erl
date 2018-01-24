@@ -7,8 +7,6 @@
     delete/2
 ]).
 
--define(PRINT(V), io:format("~n~p~n~p~n", [{?MODULE,?LINE},V])).
-
 set(Tab, Key, Value) ->
     Now = erlang:system_time(),
     true = ets:insert(Tab, {Key, Value, Now}),

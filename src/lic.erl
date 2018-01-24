@@ -1,35 +1,24 @@
 -module(lic).
 
 -export([
-    init/0,
-    table_new/1,
-    table_new/2,
-    table_delete/1,
+    new/1,
+    new/2,
     set/3,
     get/2,
     get/3,
     delete/2
 ]).
 
--define(NAME_ERROR, <<"table name is not an atom">>).
+-define(NAME_ERROR, table_name_is_not_an_atom).
 
-init() ->
-    _ = ets:new(lic_internal_info, [named_table, public, set]),
-    ok.
-
-table_new(Name) when is_atom(Name)->
+new(Name) when is_atom(Name)->
     lic_table:new(Name);
-table_new(_) ->
+new(_) ->
     {error, ?NAME_ERROR}.
 
-table_new(Name, Options) when is_atom(Name)->
+new(Name, Options) when is_atom(Name)->
     lic_table:new(Name, Options);
-table_new(_, _) ->
-    {error, ?NAME_ERROR}.
-
-table_delete(Name) when is_atom(Name)->
-    lic_table:delete(Name);
-table_delete(_) ->
+new(_, _) ->
     {error, ?NAME_ERROR}.
 
 set(Name, Key, Value) when is_atom(Name)->
