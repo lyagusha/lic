@@ -41,32 +41,15 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(clear, State) ->
-    _ = ets:insert(lic_internal_info, {{worker_state, self()}, busy}),
     #{
          name := Name,    
          size := Size,
          memory := Memory
     } = State,
-    RealSize = ets:info(Name, size),
-    SizeOvershoot = case Size of
-        no_limit -> 0;
-        S when is_integer(S) -> RealSize - S
-    end,
-    case SizeOvershoot > 0 of
-        false ->
-            ok;
-        true  ->
-            _ = [delete_oldest(Name, State) || _ <- lists:seq(1, SizeOvershoot)]
-    end,
-    RealMemory = ets:info(Name, memory),
-    case RealMemory > Memory of
-        false -> 
-            ok;
-        true  ->
-            
-            ok = delete_oldest(Name, State)
-    end,
-    _ = ets:insert(lic_internal_info, {{worker_state, self()}, ready}),
+    _ = ets:update_element(lic_internal_info, {worker, Name}, {3, busy}),
+    ok = row_count_cleaner(Name, Size, State),
+    ok = memory_cleaner(Name, Memory, State),
+    _ = ets:update_element(lic_internal_info, {worker, Name}, {3, ready}),
     {noreply, State};
 
 handle_info(_Info, State) ->
@@ -79,6 +62,30 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 % internal
+row_count_cleaner(Name, Size, State) ->
+    RealSize = ets:info(Name, size),
+    SizeOvershoot = case Size of
+        no_limit -> 0;
+        S when is_integer(S) -> RealSize - S
+    end,
+    case SizeOvershoot > 0 of
+        false ->
+            ok;
+        true  ->
+            _ = [delete_oldest(Name, State) || _ <- lists:seq(1, SizeOvershoot)],
+            ok
+    end.
+
+memory_cleaner(Name, Memory, State) ->
+    RealMemory = ets:info(Name, memory),
+    case RealMemory > Memory of
+        false -> 
+            ok;
+        true  ->            
+            ok = delete_oldest(Name, State),
+            memory_cleaner(Name, Memory, State)
+    end.
+
 delete_oldest(Name, #{time_table := Tid}) ->
     [{_, Key}] = ets:lookup(Tid, ets:first(Tid)),
     lic_data:delete(Name, Key).

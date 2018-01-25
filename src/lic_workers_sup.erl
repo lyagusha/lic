@@ -13,8 +13,7 @@ start_worker(TabName) ->
     Resp = supervisor:start_child(?MODULE, [TabName]),
     case Resp of
         {ok, WorkerPid} ->
-            _ = ets:insert(lic_workers, {TabName, WorkerPid}),
-            _ = ets:insert(lic_internal_info, {{worker_state, WorkerPid}, ready}),
+            _ = ets:insert(lic_internal_info,{{worker,TabName},WorkerPid,ready}),
             {ok, WorkerPid};
         Err ->
             Err

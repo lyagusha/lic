@@ -66,8 +66,7 @@ update_time(Tab, Key, TimeKey) ->
     ok.
 
 clear(Tab) ->
-    [{_, WorkerPid}]   = ets:lookup(lic_workers, Tab),
-    [{_, WorkerState}] = ets:lookup(lic_internal_info, {worker_state,WorkerPid}),
+    [{_, WorkerPid, WorkerState}] = ets:lookup(lic_internal_info, {worker, Tab}),
     case WorkerState of
         ready ->
             WorkerPid ! clear;

@@ -1,0 +1,4 @@
+lic.d
+.erlang.mk/
+ebin/
+*.swp

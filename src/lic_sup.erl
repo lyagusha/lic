@@ -14,4 +14,4 @@ init([]) ->
         {lic_workers_sup, start_link, []},
 		transient, infinity, supervisor, [lic_workers_sup]
     },
-    {ok, { {one_for_one, 100, 1}, [WorkersSup]} }.
+    {ok, {{one_for_one, 100, 1}, [WorkersSup]}}.
