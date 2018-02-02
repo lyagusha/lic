@@ -3,6 +3,7 @@
 -export([
     new/1,
     new/2,
+    keys/1,
     set/3,
     set/4,
     get/2,
@@ -10,23 +11,26 @@
     delete/2
 ]).
 
-new(Name) ->
-    lic_table:new(Name, []).
+new(Tab) ->
+    lic_table:new(Tab, []).
 
-new(Name, Options) ->
-    lic_table:new(Name, Options).
+new(Tab, Options) ->
+    lic_table:new(Tab, Options).
 
-set(Name, Key, Value) ->
-    lic_data:set(Name, Key, Value, infinity).
+keys(Tab) ->
+    lic_table:keys(Tab). 
 
-set(Name, Key, Value, TTL) ->
-    lic_data:set(Name, Key, Value, TTL).
+set(Tab, Key, Value) ->
+    lic_data:set(Tab, Key, Value, infinity).
 
-get(Name, Key) ->
-    lic_data:get(Name, Key).
+set(Tab, Key, Value, TTL) ->
+    lic_data:set(Tab, Key, Value, TTL).
 
-get(Name, Key, Default) ->
-    lic_data:get(Name, Key, Default).
+get(Tab, Key) ->
+    lic_data:get(Tab, Key).
 
-delete(Name, Key) ->
-    lic_data:delete(Name, Key).
+get(Tab, Key, Default) ->
+    lic_data:get(Tab, Key, Default).
+
+delete(Tab, Key) ->
+    lic_data:delete(Tab, Key).

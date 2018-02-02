@@ -1,18 +1,20 @@
 -module(lic_table).
 
 -export([
-    new/2
+    new/2,
+    keys/1
 ]).
 
 -define(NAME_ERROR, table_name_is_not_an_atom).
+-define(NOT_EXIST_ERROR, table_does_not_exist).
 -define(DEFAULT_MEMORY, erlang:memory(system)*0.3).
 -define(DEFAULT_SIZE, no_limit).
 
-new(Name, Options) when is_atom(Name) ->
+new(Tab, Options) when is_atom(Tab) ->
     case is_options_valid(Options) of
         true  ->
-            ok = save_options(Name, Options),
-            Resp = lic_workers_sup:start_worker(Name),
+            ok = save_options(Tab, Options),
+            Resp = lic_workers_sup:start_worker(Tab),
             case Resp of
                 {ok, _}    -> ok;
                 {error, _} -> {error, already_exists}
@@ -22,6 +24,15 @@ new(Name, Options) when is_atom(Name) ->
     end;
 new(_, _) ->
     {error, ?NAME_ERROR}.
+
+keys(Tab) when is_atom(Tab) ->
+    case is_exist(Tab) of 
+        true  ->
+            First = ets:first(Tab),
+            keys(Tab, First, []);
+        false ->
+            {error, ?NOT_EXIST_ERROR}
+    end.
 
 % internal
 is_options_valid(Options) -> % TODO
@@ -40,12 +51,24 @@ is_options_valid(Options) -> % TODO
             false
     end.
 
-save_options(Name, Options) ->
+save_options(Tab, Options) ->
     Size =   proplists:get_value(row_count, Options, ?DEFAULT_SIZE),
     Memory = proplists:get_value(memory, Options, ?DEFAULT_MEMORY),
     Objects = [
-        {{options, Name, row_count},   Size},
-        {{options, Name, memory}, Memory}
+        {{options, Tab, row_count},   Size},
+        {{options, Tab, memory}, Memory}
     ],
     ets:insert(lic_internal_info, Objects),
     ok.
+
+keys(_Tab, '$end_of_table', Res) ->
+    {ok, Res};
+keys(Tab, Key, Res) ->
+    Next = ets:next(Tab, Key),
+    keys(Tab, Next, [Key|Res]).
+   
+is_exist(Tab) ->
+    case ets:info(Tab) of
+        [_|_]     -> true;
+        undefined -> false
+    end.
