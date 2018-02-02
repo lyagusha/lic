@@ -4,6 +4,7 @@
     new/1,
     new/2,
     set/3,
+    set/4,
     get/2,
     get/3,
     delete/2
@@ -16,7 +17,10 @@ new(Name, Options) ->
     lic_table:new(Name, Options).
 
 set(Name, Key, Value) ->
-    lic_data:set(Name, Key, Value).
+    lic_data:set(Name, Key, Value, infinity).
+
+set(Name, Key, Value, TTL) ->
+    lic_data:set(Name, Key, Value, TTL).
 
 get(Name, Key) ->
     lic_data:get(Name, Key).
