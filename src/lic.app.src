@@ -1,0 +1,13 @@
+%% -*- mode: erlang -*-
+{application, lic,
+    [
+        {vsn, "1.0.0"},
+        {description, ""},
+        {registered, []},
+        {applications, [
+            kernel,
+            stdlib
+        ]},
+        {mod, {lic_app, []}},
+        {env, []}
+    ]}.
