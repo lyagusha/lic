@@ -10,6 +10,13 @@
 -define(NAME_ERROR, table_name_is_not_an_atom).
 
 set(Tab, Key, Value, TTL) when is_atom(Tab) ->
+    [{_, TimeTab}] = ets:lookup(lic_internal_info, {time_table, Tab}),
+    case ets:lookup(Tab, Key) of
+        [{_, _, TimeKey, _}] ->
+            true = ets:delete(TimeTab, TimeKey);
+        _ ->
+            ok
+    end,
     MonId = erlang:unique_integer([monotonic]),
     Expiry = case is_integer(TTL) of
         true  ->
@@ -18,7 +25,6 @@ set(Tab, Key, Value, TTL) when is_atom(Tab) ->
             TTL
     end,
     true = ets:insert(Tab, {Key, Value, MonId, Expiry}),
-    [{_, TimeTab}] = ets:lookup(lic_internal_info, {time_table, Tab}),
     true = ets:insert(TimeTab, {MonId, Key}),
     clear(Tab),
     ok;

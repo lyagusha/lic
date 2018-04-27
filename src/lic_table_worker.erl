@@ -72,7 +72,7 @@ row_count_cleaner(Name, Size, State) ->
         false ->
             ok;
         true  ->
-            _ = [delete_oldest(Name, State) || _ <- lists:seq(1, SizeOvershoot)],
+            delete_oldest(Name, State, SizeOvershoot),
             ok
     end.
 
@@ -86,6 +86,13 @@ memory_cleaner(Name, Memory, State) ->
             memory_cleaner(Name, Memory, State)
     end.
 
+delete_oldest(_Name, _State, 0) ->
+    ok;
+delete_oldest(Name, State, SizeOvershoot) ->
+    delete_oldest(Name, State),
+    delete_oldest(Name, State, SizeOvershoot-1).
+
 delete_oldest(Name, #{time_table := Tid}) ->
-    [{_, Key}] = ets:lookup(Tid, ets:first(Tid)),
+    KeyInTimeTab = ets:first(Tid),
+    [{_, Key}] = ets:lookup(Tid, KeyInTimeTab),
     lic_data:delete(Name, Key).
