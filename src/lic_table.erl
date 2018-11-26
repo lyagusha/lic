@@ -1,14 +1,13 @@
 -module(lic_table).
 
--export([
-    new/2,
-    keys/1
-]).
+-export([new/2]).
+-export([keys/1]).
 
 -define(NAME_ERROR, table_name_is_not_an_atom).
 -define(NOT_EXIST_ERROR, table_does_not_exist).
--define(DEFAULT_MEMORY, erlang:memory(system)*0.3).
--define(DEFAULT_SIZE, no_limit).
+
+-define(DEFAULT_MEMORY, unlimited).
+-define(DEFAULT_SIZE,   unlimited).
 
 new(Tab, Options) when is_atom(Tab) ->
     case is_options_valid(Options) of

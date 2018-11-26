@@ -1,31 +1,24 @@
 -module(lic_data).
 
--export([
-    set/4,
-    get/2,
-    get/3,
-    delete/2
-]).
+-export([set/4]).
+-export([get/2, get/3]).
+-export([delete/2]).
 
 -define(NAME_ERROR, table_name_is_not_an_atom).
 
 set(Tab, Key, Value, TTL) when is_atom(Tab) ->
-    [{_, TimeTab}] = ets:lookup(lic_internal_info, {time_table, Tab}),
-    case ets:lookup(Tab, Key) of
-        [{_, _, TimeKey, _}] ->
-            true = ets:delete(TimeTab, TimeKey);
-        _ ->
-            ok
+    TimeKey = case ets:lookup(Tab, Key) of
+        [{_, _, TK, _}] -> TK;
+        _               -> null
     end,
-    MonId = erlang:unique_integer([monotonic]),
     Expiry = case is_integer(TTL) of
         true  ->
             erlang:system_time(seconds) + TTL;
         false ->
             TTL
     end,
-    true = ets:insert(Tab, {Key, Value, MonId, Expiry}),
-    true = ets:insert(TimeTab, {MonId, Key}),
+    true = ets:insert(Tab, {Key, Value, null, Expiry}),
+    ok = update_time(Tab, Key, TimeKey),
     clear(Tab),
     ok;
 set(_, _, _, _) ->
@@ -86,14 +79,11 @@ delete(_, _) ->
 
 % internal
 update_time(Tab, Key, TimeKey) ->
-    Fun = fun() ->
-        [{_, TimeTab}] = ets:lookup(lic_internal_info, {time_table, Tab}),
-        true = ets:delete(TimeTab, TimeKey),
-        MonId = erlang:unique_integer([monotonic]),
-        _ = ets:update_element(Tab, Key, {3, MonId}),
-        true = ets:insert(TimeTab, {MonId, Key})
-    end,
-    _ = spawn(Fun),
+    [{_, TimeTab}] = ets:lookup(lic_internal_info, {time_table, Tab}),
+    true = ets:delete(TimeTab, TimeKey),
+    MonId = erlang:unique_integer([monotonic]),
+    _ = ets:update_element(Tab, Key, {3, MonId}),
+    true = ets:insert(TimeTab, {MonId, Key}),
     ok.
 
 clear(Tab) ->

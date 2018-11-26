@@ -1,15 +1,10 @@
 -module(lic).
 
--export([
-    new/1,
-    new/2,
-    keys/1,
-    set/3,
-    set/4,
-    get/2,
-    get/3,
-    delete/2
-]).
+-export([new/1, new/2]).
+-export([set/3, set/4]).
+-export([get/2, get/3]).
+-export([delete/2]).
+-export([keys/1]).
 
 new(Tab) ->
     lic_table:new(Tab, []).
